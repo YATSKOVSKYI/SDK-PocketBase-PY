@@ -286,8 +286,8 @@ class Admin:
             "password": password
         }
 
-        # Исправленный путь для авторизации администраторов
-        result = self.client._send_request("POST", "_superusers/auth-with-password", json=data)
+        # Исправленный и проверенный путь для авторизации администраторов
+        result = self.client._send_request("POST", "collections/_superusers/auth-with-password", json=data)
 
         # Save the auth data and token, marking as admin auth
         self.client.auth_store.save(result.get("token", ""), result.get("admin", {}), True)
