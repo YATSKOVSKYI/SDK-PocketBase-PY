@@ -23,7 +23,7 @@ class PocketBaseException(Exception):
 
 
 class Collection:
-    """Represents a PocketBase collection for performing CRUD operations."""
+    """Represents a PocketBase collection for performing CRUD operations"""
 
     def __init__(self, client, collection_name: str):
         self.client = client
