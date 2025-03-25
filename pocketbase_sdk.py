@@ -221,6 +221,7 @@ class Auth:
         """Get the current auth model (user record)."""
         return self.client.auth_store.model
 
+    @property
     def is_valid(self) -> bool:
         """Check if the current auth token is valid."""
         return self.client.auth_store.is_valid
@@ -236,22 +237,26 @@ class AuthStore:
     def __init__(self):
         self.token = ""
         self.model = {}
+        self.is_admin = False
 
-    def save(self, token: str, model: Dict) -> None:
+    def save(self, token: str, model: Dict, is_admin: bool = False) -> None:
         """
         Save auth data.
 
         Args:
             token: Auth token
-            model: Auth model (user record)
+            model: Auth model (user or admin record)
+            is_admin: Whether this auth is for an admin
         """
         self.token = token
         self.model = model
+        self.is_admin = is_admin
 
     def clear(self) -> None:
         """Clear auth data."""
         self.token = ""
         self.model = {}
+        self.is_admin = False
 
     @property
     def is_valid(self) -> bool:
@@ -281,12 +286,36 @@ class Admin:
             "password": password
         }
 
-        result = self.client._send_request("POST", "admins/auth-with-password", json=data)
+        # Исправленный путь для авторизации администраторов
+        result = self.client._send_request("POST", "_superusers/auth-with-password", json=data)
 
-        # Save the auth data and token
-        self.client.auth_store.save(result.get("token", ""), result.get("admin", {}))
+        # Save the auth data and token, marking as admin auth
+        self.client.auth_store.save(result.get("token", ""), result.get("admin", {}), True)
 
         return result
+
+    def is_authenticated(self) -> bool:
+        """
+        Check if currently authenticated as admin.
+
+        Returns:
+            True if authenticated as admin
+        """
+        return self.client.auth_store.is_valid and self.client.auth_store.is_admin
+
+    def is_super_admin(self) -> bool:
+        """
+        Check if the authenticated admin is a super admin.
+        Note: PocketBase superadmins can access and modify anything.
+
+        Returns:
+            True if super admin, False otherwise
+        """
+        if not self.is_authenticated():
+            return False
+
+        # В PocketBase все администраторы являются суперпользователями
+        return True
 
 
 class PocketBase:
